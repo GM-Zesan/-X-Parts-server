@@ -50,7 +50,6 @@ async function run() {
             res.send({ token });
         });
 
-
         //check admin or not
         app.get("/admin/:email", async (req, res) => {
             const email = req.params.email;
@@ -58,8 +57,6 @@ async function run() {
             const isAdmin = user.role === "admin";
             res.send({ admin: isAdmin });
         });
-
-
 
         //make an admin
         app.put("/user/admin/:email", verifyToken, async (req, res) => {
@@ -82,7 +79,7 @@ async function run() {
                 res.status(403).send({ message: "forbidden" });
             }
         });
-        
+
         //Update user
         app.put("/user/:email", async (req, res) => {
             const email = req.params.email;
@@ -121,12 +118,27 @@ async function run() {
             res.send(users);
         });
 
+        //Inser product
+        app.post("/product",verifyToken, async (req, res) => {
+            const getProduct = req.body;
+            const result = await productCollection.insertOne(getProduct);
+            res.send(result);
+        });
+
         //http://localhost:5000/product
         app.get("/product", async (req, res) => {
             const query = {};
             const cursor = productCollection.find(query);
             const products = await cursor.toArray();
             res.send(products);
+        });
+
+        //Delete product from database
+        app.delete("/product/:id",verifyToken, async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await productCollection.deleteOne(query);
+            res.send(result);
         });
 
         //personal data (Indevidually) by email
@@ -172,6 +184,12 @@ async function run() {
             const getOrder = req.body;
             const result = await orderCollection.insertOne(getOrder);
             res.send(result);
+        });
+
+        //get all orders
+        app.get("/orders", verifyToken, async (req, res) => {
+            const orders = await orderCollection.find().toArray();
+            res.send(orders);
         });
     } finally {
     }
