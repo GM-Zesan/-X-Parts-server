@@ -3,6 +3,7 @@ const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
 const app = express();
+const jwt = require("jsonwebtoken");
 const port = process.env.PORT || 5000;
 
 //middleware
@@ -47,6 +48,40 @@ async function run() {
                 expiresIn: "1d",
             });
             res.send({ token });
+        });
+
+        //Update user
+        app.put("/user/:email", async (req, res) => {
+            const email = req.params.email;
+            const filter = { email: email };
+            const user = req.body;
+            const options = { upsert: true };
+            const updateInfo = {
+                $set: user,
+            };
+            const result = await userCollection.updateOne(
+                filter,
+                updateInfo,
+                options
+            );
+            const token = jwt.sign(
+                { email: email },
+                process.env.ACCESS_TOKEN_SECRET,
+                {
+                    expiresIn: "1d",
+                }
+            );
+
+            res.send({ result, token });
+            // res.send(result);
+        });
+
+        //Load a single user for a perticular email
+        app.get("/user/:email", async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email };
+            const result = await userCollection.findOne(query);
+            res.send(result);
         });
 
         //http://localhost:5000/product
