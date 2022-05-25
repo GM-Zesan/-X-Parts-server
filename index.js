@@ -184,15 +184,32 @@ async function run() {
         });
 
 
+        //set status to shipped and vice varsa
+        app.put("/order/:id",verifyToken, async (req, res) => {
+            const id = req.params.id;
+            const itemData = req.body;
+            const filter = { _id: ObjectId(id) };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: {
+                    status: itemData.status,
+                },
+            };
+            const result = await orderCollection.updateOne(
+                filter,
+                updateDoc,
+                options
+            );
+            res.send(result);
+        });
+
 
         //PAyment
         app.post("/create-payment-intent", async (req, res) => {
             const getOrder = req.body;
             console.log("body", getOrder);
             const price = getOrder.totalPrice;
-            console.log("price",price);
             const amount = price * 100;
-            console.log("amount",amount);
             const paymentIntent = await stripe.paymentIntents.create({
                 amount: amount,
                 currency: "usd",
@@ -210,6 +227,7 @@ async function run() {
             const updatedDoc = {
                 $set: {
                     paid: true,
+                    status:"pending",
                     transactionId: order.transactionId
                 },
             };
