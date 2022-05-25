@@ -121,17 +121,6 @@ async function run() {
         });
 
 
-        app.post("/create-payment-intent", async (req, res) => {
-            const getOrder = req.body;
-            const price = getOrder.price;
-            const amount = price * 100;
-            const paymentIntent = await stripe.paymentIntents.create({
-                amount: amount,
-                currency: "usd",
-                payment_method_types: ["card"],
-            });
-            res.send({ clientSecret: paymentIntent.client_secret });
-        });
 
         //Insert product
         app.post("/product",verifyToken, async (req, res) => {
@@ -195,6 +184,24 @@ async function run() {
         });
 
 
+
+        //PAyment
+        app.post("/create-payment-intent", async (req, res) => {
+            const getOrder = req.body;
+            console.log("body", getOrder);
+            const price = getOrder.totalPrice;
+            console.log("price",price);
+            const amount = price * 100;
+            console.log("amount",amount);
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: "usd",
+                payment_method_types: ["card"],
+            });
+            res.send({ clientSecret: paymentIntent.client_secret });
+        });
+
+
         //Update order
         app.patch("/order/:id", verifyToken, async (req, res) => {
             const id = req.params.id;
@@ -203,11 +210,11 @@ async function run() {
             const updatedDoc = {
                 $set: {
                     paid: true,
-                    transactionId: order.transactionId,
+                    transactionId: order.transactionId
                 },
             };
 
-            const result = await paymentCollection.insertOne(payment);
+            const result = await paymentCollection.insertOne(order);
             const updatedBooking = await orderCollection.updateOne(
                 filter,
                 updatedDoc
